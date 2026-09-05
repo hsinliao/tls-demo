@@ -153,23 +153,38 @@ Demo 启动器会自动读取 `certs/openssl/`（或 `certs/keytool/`）下脚�
 
 ### 6.2 一键 mTLS TLS 1.3 示例
 
-终端 1：
+推荐直接把下面的命令按顺序复制到两个终端运行。Demo 在未设置环境变量/系统属性时会自动读取
+`certs/openssl/`（或 `certs/keytool/`）里脚本生成的密码文件，因此本地“开箱即可运行”；
+需要显式注入密码时，按 6.1 的环境变量方式操作即可。
+
+两个终端都要先执行的前提（必须位于项目根目录，因为 properties 里的证书路径是相对路径；
+JAR 由 JDK 17 构建，默认 JDK 不是 17 时必须切换）：
 
 ```bash
-export TLS_KEYSTORE_PASSWORD="$(cat certs/openssl/server-keystore.password)"
-export TLS_TRUSTSTORE_PASSWORD="$(cat certs/openssl/server-truststore.password)"
+cd /Users/hsinliao/work/workspace/tls-demo   # 换成你的项目根目录
+export JAVA_HOME="$(/usr/libexec/java_home -v 17)"
+export PATH="$JAVA_HOME/bin:$PATH"
+java -version   # 应显示 17.x
+```
+
+终端 1（服务端）：
+
+```bash
 java -jar tls-demo/target/tls-demo-1.0.0.jar server \
-  --config config-examples/mtls-tls13/server.properties --port 8443
+  --config config-examples/mtls-tls13/server.properties \
+  --host 127.0.0.1 --port 8443
 ```
 
-终端 2：
+终端 2（客户端）：
 
 ```bash
-export TLS_KEYSTORE_PASSWORD="$(cat certs/openssl/client-keystore.password)"
-export TLS_TRUSTSTORE_PASSWORD="$(cat certs/openssl/client-truststore.password)"
 java -jar tls-demo/target/tls-demo-1.0.0.jar client \
-  --config config-examples/mtls-tls13/client.properties --port 8443
+  --config config-examples/mtls-tls13/client.properties \
+  --host localhost --port 8443
 ```
+
+`--host` / `--port` 都可以省略：服务端默认监听 `127.0.0.1:8443`，客户端默认连接
+properties 中 `demo.peer.host` / `demo.peer.port` 指向的地址。
 
 ### 6.3 一键单向 TLS 1.3 示例
 
